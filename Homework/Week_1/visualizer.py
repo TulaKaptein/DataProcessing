@@ -24,9 +24,12 @@ with open(INPUT_CSV, newline='') as input_file:
         data_dict[row['Year']].append(row['Rating'])
     years = []
     averages = []
+
+    # make a list of the years
     for key in data_dict:
         years.append(int(key))
-    print(years)
+
+    # make a list of the average ratings
     for key in data_dict:
         total = 0
         ratings = 0
@@ -35,7 +38,8 @@ with open(INPUT_CSV, newline='') as input_file:
             ratings += 1
         average = round(total/ratings, 2)
         averages.append(average)
-    print(averages)
+
+    # plot a graph 
     lines = plt.plot(years, averages, color='r', linewidth=2.0)
     plt.ylabel('average rating')
     plt.xlabel('year')

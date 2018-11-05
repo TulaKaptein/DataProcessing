@@ -6,7 +6,6 @@ This script scrapes IMDB and outputs a CSV file with highest rated movies.
 """
 
 import csv
-from movie import Movie
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
@@ -28,11 +27,12 @@ def extract_movies(dom):
     - Runtime (only a number!)
     """
 
+    # make a list of raw data for the movies
     movies = []
     movies_raw = dom.find_all(lambda tag: tag.name == 'div' and tag.get('class') == ['lister-item-content'])
     for movie in movies_raw:
         title = movie.h3.a.string
-        rating = float(movie.find("div", class_= "inline-block ratings-imdb-rating").strong.string)
+        rating = movie.find("div", class_= "inline-block ratings-imdb-rating").strong.string
         year_released = movie.h3.find("span", class_= "lister-item-year text-muted unbold").string
         if "I" in year_released:
             year_released = year_released.split()[1]
@@ -45,9 +45,12 @@ def extract_movies(dom):
                 if actors == "":
                     actors = actor
                 actors = actors + ", " + actor
-        runtime = int(movie.find("span", class_= "runtime").string.split()[0])
-        mov = Movie(title, rating, year_released, actors, runtime)
-        movies.append(mov)
+        runtime = movie.find("span", class_= "runtime").string.split()[0]
+
+        # make a list with all the info of one movie
+        movie = [title, rating, year_released, actors, runtime]
+        # make a list of movies
+        movies.append(movie)
 
     return movies
 
@@ -57,16 +60,15 @@ def save_csv(outfile, movies):
     Output a CSV file containing highest rated movies.
     """
     writer = csv.writer(outfile)
-    # # ADD sep= AS THE FIRST LINE OF THE FILE
-    # writer.writerow(['sep=,'])
     writer.writerow(['Title', 'Rating', 'Year', 'Actors', 'Runtime'])
 
+    # write the movies to the csv file
     for movie in movies:
-        title = movie.title
-        rating = movie.rating
-        year = movie.year
-        actors = movie.actors
-        runtime = movie.runtime
+        title = movie[0]
+        rating = movie[1]
+        year = movie[2]
+        actors = movie[3]
+        runtime = movie[4]
         writer.writerow([title, rating, year, actors, runtime])
 
 
