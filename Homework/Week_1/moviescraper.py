@@ -42,6 +42,8 @@ def extract_movies(dom):
         for link in actors_raw:
             if "adv_li_st" in link['href']:
                 actor = link.string
+                if actors == "":
+                    actors = actor
                 actors = actors + ", " + actor
         runtime = int(movie.find("span", class_= "runtime").string.split()[0])
         mov = Movie(title, rating, year_released, actors, runtime)
