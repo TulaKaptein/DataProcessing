@@ -39,11 +39,13 @@ with open(INPUT_CSV, newline='') as input_file:
         average = round(total/ratings, 2)
         averages.append(average)
 
-    # plot a graph 
-    lines = plt.plot(years, averages, color='r', linewidth=2.0)
+    # plot a graph
+    plt.plot(years, averages, 'rs-',
+    label='The average rating of movies between 2008 and 2017')
     plt.ylabel('average rating')
     plt.xlabel('year')
     plt.axis([2007, 2018, 8.0, 9.0])
+    plt.legend(loc='upper left')
 
 if __name__ == "__main__":
     plt.show()
