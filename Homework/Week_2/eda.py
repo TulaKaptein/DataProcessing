@@ -8,7 +8,6 @@ This script improves data from an input file and writes it to a JSON file.
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import json
 
 from pandas.api.types import is_numeric_dtype
 
