@@ -19,22 +19,22 @@
               // console.log(JSON.parse(txtFile.responseText));
               var data = JSON.parse(txtFile.responseText);
 
-              // high income
+              // high income data
               var dict = makeDict(firstYear, lastYear);
               var dict1 = fillDict(data, dict, "High income");
               var dictHigh = calculateMean(dict1);
 
-              // low income
+              // low income data
               dict = makeDict(firstYear, lastYear);
               var dict2 = fillDict(data, dict, "Low income");
               var dictLow = calculateMean(dict2);
 
-              // lower-middle income
+              // lower-middle income data
               dict = makeDict(firstYear, lastYear);
               var dict3 = fillDict(data, dict, "Lower middle income")
               var dictLowMiddle = calculateMean(dict3);
 
-              // upper-middle income
+              // upper-middle income data
               dict = makeDict(firstYear, lastYear);
               var dict4 = fillDict(data, dict, "Upper middle income");
               var dictUpMiddle = calculateMean(dict4);
