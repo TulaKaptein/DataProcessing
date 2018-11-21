@@ -16,7 +16,6 @@
       var txtFile = new XMLHttpRequest();
       txtFile.onreadystatechange = function() {
           if (txtFile.readyState === 4 && txtFile.status == 200) {
-              // console.log(JSON.parse(txtFile.responseText));
               var data = JSON.parse(txtFile.responseText);
 
               // high income data
@@ -59,32 +58,34 @@
               surface.rotate(90*Math.PI/180)
 
               // create table title and legenda
+              var legendX = 500;
+              var legendY = 505;
               surface.font = "18px Aerial";
               surface.textAlign = 'center';
               surface.fillText("Average life expectancy for different incomes from 1960 to 2015", 360, 30);
               surface.textAlign = 'start';
               surface.font = "15px Aerial";
-              surface.fillText("Legend", 500, 500);
-              surface.strokeRect(500, 505, 150, 50);
+              surface.fillText("Legend", legendX, legendY - 5);
+              surface.strokeRect(legendX, legendY, 150, 50);
 
               // fill legenda
               surface.font = "10px Aerial";
 
               surface.fillStyle = 'rgb(200,0,0)';
-              surface.fillRect(510, 515, 3,3);
-              surface.fillText("High income", 530, 520);
+              surface.fillRect(legendX + 10, legendY + 10, 3,3);
+              surface.fillText("High income", legendX + 30, legendY + 15);
 
               surface.fillStyle = 'rgb(0,0,200)';
-              surface.fillRect(510, 525, 3,3);
-              surface.fillText("Upper-middle income", 530, 530);
+              surface.fillRect(legendX + 10, legendY + 20, 3,3);
+              surface.fillText("Upper-middle income", legendX + 30, legendY + 25);
 
               surface.fillStyle = 'rgb(0,0,0)';
-              surface.fillRect(510, 535, 3,3);
-              surface.fillText("Lower-middle income", 530, 540);
+              surface.fillRect(legendX + 10, legendY + 30, 3,3);
+              surface.fillText("Lower-middle income", legendX + 30, legendY + 35);
 
               surface.fillStyle = 'rgb(0,200,0)';
-              surface.fillRect(510, 545, 3,3);
-              surface.fillText("Low income", 530, 550);
+              surface.fillRect(legendX + 10, legendY + 40, 3,3);
+              surface.fillText("Low income", legendX + 30, legendY + 45);
 
               // create functions for calculating x- and y-values
               var x_values = createTransform([firstYear - 5, lastYear + 5], [xMin, xMax]);
