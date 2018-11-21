@@ -1,0 +1,216 @@
+<!-- Name: Tula Kaptein -->
+<!-- Studentnumber: 11013478 -->
+<!-- Purpose:  -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Life expectancy at birth between 1960 and 2015</title>
+  </head>
+  <body>
+    <canvas id='MyCanvas' width='700' height='700'></canvas>
+    <script>
+      var fileName = "data.json";
+      var txtFile = new XMLHttpRequest();
+      txtFile.onreadystatechange = function() {
+          if (txtFile.readyState === 4 && txtFile.status == 200) {
+              // console.log(JSON.parse(txtFile.responseText));
+              var data = JSON.parse(txtFile.responseText);
+
+              // make dictionary
+              var dict = makeDict(1960, 2015);
+
+              // high income
+              var dict1 = fillDict(data, dict, "High income");
+              dict_high = calculateMean(dict1);
+              // console.log(dict_high);
+
+              // low income
+              dict = makeDict(1960, 2015);
+              var dict2 = fillDict(data, dict, "Low income");
+              dict_low = calculateMean(dict2);
+              // console.log(dict_low);
+
+              // lower-middle income
+              dict = makeDict(1960, 2015);
+              var dict3 = fillDict(data, dict, "Lower middle income")
+              dict_l_middle = calculateMean(dict3);
+
+              // upper-middle income
+              dict = makeDict(1960, 2015);
+              var dict4 = fillDict(data, dict, "Upper middle income");
+              dict_u_middle = calculateMean(dict4);
+
+              // draw canvas
+              var canvas = document.getElementById('MyCanvas');
+              var surface = canvas.getContext('2d');
+
+              // draw axes
+              drawLine(surface, 20, 670, 670, 670); //x-axis
+              drawLine(surface, 30, 30, 30, 680); //y-axis
+
+              // create axes labels
+              surface.font = "bold 10px Aerial";
+              surface.fillText("Year", 670, 670);
+              // surface.rotate(Math.PI/2)
+              surface.fillText("Average life expectancy in years", 20, 20);
+              // surface.rotate(-Math.PI/2)
+
+              // create table title and legenda
+              surface.font = "18px Aerial";
+              surface.textAlign = 'center';
+              surface.fillText("Average life expectancy for different incomes from 1960 to 2015", 360, 30);
+              surface.textAlign = 'start';
+              surface.font = "15px Aerial";
+              surface.fillText("Legenda", 500, 500);
+              surface.strokeRect(500, 505, 150, 50);
+
+              // fill legenda
+              surface.font = "10px Aerial";
+
+              surface.fillStyle = 'rgb(200,0,0)';
+              surface.fillRect(510, 515, 3,3);
+              surface.fillText("High income", 530, 520);
+
+              surface.fillStyle = 'rgb(0,0,200)';
+              surface.fillRect(510, 525, 3,3);
+              surface.fillText("Upper-middle income", 530, 530);
+
+              surface.fillStyle = 'rgb(0,0,0)';
+              surface.fillRect(510, 535, 3,3);
+              surface.fillText("Lower-middle income", 530, 540);
+
+              surface.fillStyle = 'rgb(0,200,0)';
+              surface.fillRect(510, 545, 3,3);
+              surface.fillText("Low income", 530, 550);
+
+              // create functions for calculating x- and y-values
+              var x_values = createTransform([1955, 2016], [30, 670]);
+              var y_values = createTransform([0, 100],[670, 30]);
+
+              // put dicts in the canvas
+              makeDataLine(dict_high,'rgb(200,0,0)');
+              makeDataLine(dict_u_middle, 'rgb(0,0,200)');
+              makeDataLine(dict_l_middle, 'rgb(0,0,0)');
+              makeDataLine(dict_low, 'rgb(0,200,0)');
+
+              // make x-axis labels
+              for (i = 1960; i < 2016; i+=5){
+                var x = x_values(i);
+                surface.strokeStyle ="rgb(0,0,0)";
+                drawLine(surface, x, 670, x, 675);
+                surface.fillStyle = 'rgb(0,0,0)'
+                surface.font = "10px Aerial";
+                surface.fillText(i, x, 685);
+              }
+
+              // make y-axis labels
+              for (i = 10; i<= 100; i+=10){
+                var y = y_values(i);
+                drawLine(surface, 25, y, 30, y);
+                surface.fillStyle = 'rgb(0,0,0)'
+                surface.font = "10px Aerial";
+                surface.fillText(i, 5, y);
+              }
+
+              function makeDataPoints(dict, color){
+                for (year in dict){
+                  var x = x_values(year);
+                  var y = y_values(dict[year]);
+                  surface.fillStyle = color;
+                  surface.fillRect(x,y,3,3);
+                }
+              }
+
+              function makeDataLine(dict, color){
+                surface.beginPath();
+                var x = x_values(1960);
+                var y = y_values(dict[1960]);
+                surface.moveTo(x,y);
+                for (year in dict){
+                  var x = x_values(year);
+                  var y = y_values(dict[year]);
+                  surface.strokeStyle = color;
+                  surface.lineTo(x,y);
+                  surface.stroke();
+                  surface.moveTo(x,y);
+                }
+              }
+
+          }
+      }
+      txtFile.open("GET", fileName);
+      txtFile.send();
+
+      function drawLine(ctx, startX, startY, endX, endY){
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+      }
+
+      function makeDict(begin, end){
+        var dict = {};
+        var year;
+        for (year = begin; year <= end; year++){
+          dict[year] = [];
+        }
+        return dict
+      }
+
+      function fillDict(data, dict, attribute){
+        for (year in dict){
+          for (x in data){
+            if (year == data[x].Year && data[x]["Income Group"] == attribute){
+              dict[year].push(data[x]["Life Expectancy"]);
+            }
+          }
+        }
+        return dict
+      }
+
+      function calculateMean(dict){
+        for (year in dict){
+          var counter = 0;
+          var total = 0;
+          for (x in dict[year]){
+            if (dict[year][x] !== null){
+              total += parseInt(dict[year][x]);
+              counter++;
+            }
+
+          }
+          mean = total/counter;
+          dict[year] = mean;
+
+        }
+        return dict
+      }
+
+      function createTransform(domain, range){
+      	// domain is a two-element array of the data bounds [domain_min, domain_max]
+      	// range is a two-element array of the screen bounds [range_min, range_max]
+      	// this gives you two equations to solve:
+      	// range_min = alpha * domain_min + beta
+      	// range_max = alpha * domain_max + beta
+       		// a solution would be:
+
+          var domain_min = domain[0]
+          var domain_max = domain[1]
+          var range_min = range[0]
+          var range_max = range[1]
+
+          // formulas to calculate the alpha and the beta
+         	var alpha = (range_max - range_min) / (domain_max - domain_min)
+          var beta = range_max - alpha * domain_max
+
+          // returns the function for the linear transformation (y= a * x + b)
+          return function(x){
+            return alpha * x + beta;
+          }
+      }
+
+
+    </script>
+  </body>
+</html>
