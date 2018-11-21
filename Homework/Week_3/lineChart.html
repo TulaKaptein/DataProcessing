@@ -1,6 +1,6 @@
 <!-- Name: Tula Kaptein -->
 <!-- Studentnumber: 11013478 -->
-<!-- Purpose:  -->
+<!-- Purpose: creating a linechart from a .json file -->
 
 <!DOCTYPE html>
 <html>
@@ -10,6 +10,8 @@
   <body>
     <canvas id='MyCanvas' width='700' height='700'></canvas>
     <script>
+      var firstYear = 1960;
+      var lastYear = 2015
       var fileName = "data.json";
       var txtFile = new XMLHttpRequest();
       txtFile.onreadystatechange = function() {
@@ -17,44 +19,44 @@
               // console.log(JSON.parse(txtFile.responseText));
               var data = JSON.parse(txtFile.responseText);
 
-              // make dictionary
-              var dict = makeDict(1960, 2015);
-
               // high income
+              var dict = makeDict(firstYear, lastYear);
               var dict1 = fillDict(data, dict, "High income");
-              dict_high = calculateMean(dict1);
-              // console.log(dict_high);
+              var dictHigh = calculateMean(dict1);
 
               // low income
-              dict = makeDict(1960, 2015);
+              dict = makeDict(firstYear, lastYear);
               var dict2 = fillDict(data, dict, "Low income");
-              dict_low = calculateMean(dict2);
-              // console.log(dict_low);
+              var dictLow = calculateMean(dict2);
 
               // lower-middle income
-              dict = makeDict(1960, 2015);
+              dict = makeDict(firstYear, lastYear);
               var dict3 = fillDict(data, dict, "Lower middle income")
-              dict_l_middle = calculateMean(dict3);
+              var dictLowMiddle = calculateMean(dict3);
 
               // upper-middle income
-              dict = makeDict(1960, 2015);
+              dict = makeDict(firstYear, lastYear);
               var dict4 = fillDict(data, dict, "Upper middle income");
-              dict_u_middle = calculateMean(dict4);
+              var dictUpMiddle = calculateMean(dict4);
 
               // draw canvas
               var canvas = document.getElementById('MyCanvas');
               var surface = canvas.getContext('2d');
 
               // draw axes
-              drawLine(surface, 20, 670, 670, 670); //x-axis
-              drawLine(surface, 30, 30, 30, 680); //y-axis
+              var yMax = 30
+              var yMin = 670
+              var xMax = 670
+              var xMin = 30;
+              drawLine(surface, xMin - 10, yMin, xMax, yMin); //x-axis
+              drawLine(surface, xMin, yMax, xMin, yMin + 10); //y-axis
 
               // create axes labels
               surface.font = "bold 10px Aerial";
-              surface.fillText("Year", 670, 670);
-              // surface.rotate(Math.PI/2)
-              surface.fillText("Average life expectancy in years", 20, 20);
-              // surface.rotate(-Math.PI/2)
+              surface.fillText("Year", xMax - 20, yMin - 10);
+              surface.rotate(-90*Math.PI/180)
+              surface.fillText("Average life expectancy in years", -200, 40);
+              surface.rotate(90*Math.PI/180)
 
               // create table title and legenda
               surface.font = "18px Aerial";
@@ -62,7 +64,7 @@
               surface.fillText("Average life expectancy for different incomes from 1960 to 2015", 360, 30);
               surface.textAlign = 'start';
               surface.font = "15px Aerial";
-              surface.fillText("Legenda", 500, 500);
+              surface.fillText("Legend", 500, 500);
               surface.strokeRect(500, 505, 150, 50);
 
               // fill legenda
@@ -85,47 +87,37 @@
               surface.fillText("Low income", 530, 550);
 
               // create functions for calculating x- and y-values
-              var x_values = createTransform([1955, 2016], [30, 670]);
-              var y_values = createTransform([0, 100],[670, 30]);
+              var x_values = createTransform([firstYear - 5, lastYear + 5], [xMin, xMax]);
+              var y_values = createTransform([0, 100],[yMin, yMax]);
 
               // put dicts in the canvas
-              makeDataLine(dict_high,'rgb(200,0,0)');
-              makeDataLine(dict_u_middle, 'rgb(0,0,200)');
-              makeDataLine(dict_l_middle, 'rgb(0,0,0)');
-              makeDataLine(dict_low, 'rgb(0,200,0)');
+              makeDataLine(dictHigh,'rgb(200,0,0)');
+              makeDataLine(dictUpMiddle, 'rgb(0,0,200)');
+              makeDataLine(dictLowMiddle, 'rgb(0,0,0)');
+              makeDataLine(dictLow, 'rgb(0,200,0)');
 
               // make x-axis labels
-              for (i = 1960; i < 2016; i+=5){
+              for (i = firstYear; i <= lastYear; i+=5){
                 var x = x_values(i);
                 surface.strokeStyle ="rgb(0,0,0)";
-                drawLine(surface, x, 670, x, 675);
+                drawLine(surface, x, yMin, x, yMin + 5);
                 surface.fillStyle = 'rgb(0,0,0)'
                 surface.font = "10px Aerial";
-                surface.fillText(i, x, 685);
+                surface.fillText(i, x, yMin + 15);
               }
 
               // make y-axis labels
               for (i = 10; i<= 100; i+=10){
                 var y = y_values(i);
-                drawLine(surface, 25, y, 30, y);
+                drawLine(surface, xMin - 5, y, xMin, y);
                 surface.fillStyle = 'rgb(0,0,0)'
                 surface.font = "10px Aerial";
-                surface.fillText(i, 5, y);
+                surface.fillText(i, xMin - 25, y);
               }
-
-              function makeDataPoints(dict, color){
-                for (year in dict){
-                  var x = x_values(year);
-                  var y = y_values(dict[year]);
-                  surface.fillStyle = color;
-                  surface.fillRect(x,y,3,3);
-                }
-              }
-
               function makeDataLine(dict, color){
                 surface.beginPath();
-                var x = x_values(1960);
-                var y = y_values(dict[1960]);
+                var x = x_values(firstYear);
+                var y = y_values(dict[firstYear]);
                 surface.moveTo(x,y);
                 for (year in dict){
                   var x = x_values(year);
@@ -136,7 +128,14 @@
                   surface.moveTo(x,y);
                 }
               }
-
+              function makeDataPoints(dict, color){
+                for (year in dict){
+                  var x = x_values(year);
+                  var y = y_values(dict[year]);
+                  surface.fillStyle = color;
+                  surface.fillRect(x,y,3,3);
+                }
+              }
           }
       }
       txtFile.open("GET", fileName);
@@ -209,6 +208,8 @@
             return alpha * x + beta;
           }
       }
+
+
 
 
     </script>
