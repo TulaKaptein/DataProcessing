@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <script type="text/javascript" src="http://d3js.org/d3.v5.min.js"></script>
+        <style type="text/css">
+          .axis path,
+          .axis line {
+              fill: none;
+              stroke: black;
+              shape-rendering: crispEdges;
+          }
+
+          .axis text {
+              font-family: sans-serif;
+              font-size: 11px;
+          }
+          .bar {
+            fill: pink;
+          }
+          .bar:hover {
+            fill: lightblue;
+          }
+          div.tooltip {
+            color: black;
+            position: absolute;
+            text-align: center;
+            width: 60px;
+            height: 28px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: rgba(255,255,0,.8);
+            border: 2px solid yellow;
+            pointer-events: none;
+          }
+
+
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+          // Set width, height and barPadding
+          var w = 500;
+          var h = 300;
+          var barPadding = 1;
+          var marginLeft = 30
+          var marginRight = 30;
+          var marginTop = 30;
+          var marginDown = 30;
+
+          d3.select("title").text("Bar chart with D3");
+          d3.select("body").append("h1").text("Average income of twelve \
+          different age groups in 2013");
+          d3.select("body").append("p").text("Name: Tula Kaptein");
+          d3.select("body").append("p").text("Student Number: 11013478");
+          d3.select("body").append("h3").text("Description of dataset and visualization");
+          d3.select("body").append("p").text("This bar chart visualizes \
+          the average gross income of different age groups. The dataset comes \
+          from CBS Open data StatLine and contains data of the year 2013.");
+          var svg = d3.select("body").append("svg").attr("width", w + marginLeft + marginRight).attr("height", h + marginTop + marginDown);
+
+          var ageGroups = ["0 to 15 years", "15 to 25 years", "25 to 45 years", "45 to 65 years", "65 years and older"]
+
+          // Load the data.json file into d3
+          d3.json("new.json").then(function(dataset){
+
+            // Make a list of the data
+            var dataList = makeList(dataset, "GemiddeldInkomen_2");
+
+            // Define a scaling function for the bars
+            var yScaleInvert = d3.scaleLinear()
+                                 .domain([0, d3.max(dataList)])
+                                 .range([h, 0]);
+            var xScale = d3.scaleBand()
+                           .domain(ageGroups)
+                           .range([0,w])
+
+            var div = d3.select("body")
+                        .append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", 0);
+
+            // Define the x,y coordinate, width, height and color of the bars
+            var bars = svg.selectAll("rect")
+               .data(dataList)
+               .enter()
+               .append("rect")
+               .attr("class", "bar")
+               .attr("x", function(d, i) {
+                 return i * (w/dataList.length) + marginLeft;
+               })
+               .attr("y", function(d){
+                 // return h - yScale(d);
+                 return marginTop + yScaleInvert(d);
+               })
+               .attr("width", w/dataList.length - barPadding)
+               .attr("height", function(d){
+                 return h - yScaleInvert(d);
+               })
+               // Got this from https://gist.github.com/woodyrew/645d0258415db9205da52cb0e049ca28
+               .on('mouseover', d => {
+                  div
+                    .transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                  div
+                    .html(d)
+                    .style('left', d3.event.pageX + 'px')
+                    .style('top', d3.event.pageY - 28 + 'px');
+                })
+                .on('mouseout', () => {
+                  div
+                    .transition()
+                    .duration(500)
+                    .style('opacity', 0);
+                });
+
+
+            // Define the y-axis
+            var yAxis = d3.axisRight(yScaleInvert);
+            var xAxis = d3.axisBottom(xScale);
+
+            // Form the yAxis
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(0," + marginTop +")")
+                .call(yAxis);
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + marginLeft + "," + (h + marginTop) + ")")
+                .call(xAxis);
+
+
+          });
+
+          // Function that makes a list of a certain attribute
+          function makeList(dataset, attribute){
+            var dataList = [];
+            for (value in dataset){
+              for (x in dataset[value]){
+                // console.log(dataset[value][x][attribute]);
+                dataList.push(dataset[value][x][attribute]);
+              }
+
+            }
+            return dataList;
+          }
+
+        </script>
+    </body>
+</html>
