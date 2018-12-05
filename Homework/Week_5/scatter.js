@@ -18,7 +18,7 @@ window.onload = function() {
 function main (response){
   var width = 700;
   var height = 400;
-  var margin = {left:40, right:120, top: 20, bottom: 20};
+  var margin = {left:40, right:120, top: 40, bottom: 20};
   var legendPadding = 10;
   var xScale = d3.scaleLinear()
                  .range([0,width]);
@@ -32,19 +32,25 @@ function main (response){
               .attr("height", height + margin.top + margin.bottom);
 
   svg.append("text")
+     .attr("x", 0.3*width)
+     .attr("y", 30)
+     .attr("class", "plot-title")
+     .text("Scatter plot of the life expectancy and death rate in the USA for category: Both Sexes")
+
+  svg.append("text")
      .attr("x", 0.75*width)
-     .attr("y", height + 10)
+     .attr("y", height + 30)
      .attr("class", "axis-title")
      .text("Average life expectancy (years)");
 
   svg.append("text")
      .attr("transform", "rotate(-90)")
-     .attr("x", -230)
+     .attr("x", -240)
      .attr("y", 60)
      .attr("class", "axis-title")
      .text("Age adjusted death rate (per 100.000)");
 
- legend = svg.append("rect")
+  svg.append("rect")
              .attr("class", "legend")
              .attr("x", margin.left + width + legendPadding)
              .attr("y", margin.top)
@@ -64,31 +70,27 @@ function main (response){
     .enter()
     .append("button")
     .attr("class", "button")
-    .attr("border-color", function(d){
-      if (d == "Both Sexes"){
-        return "blue";
-      }
-    })
     .text(function(d){
       return d;
     })
     .on('click', function(d){
-      updatePlot(d);
-      return console.log("Whoop");
+      return updatePlot(d);
     })
 
   function updatePlot(sex){
 
     updateAxes(sex);
 
+    svg.select(".plot-title")
+       .text("Scatter plot of the life expectancy and death rate in the USA for category: " + sex)
+
     for (item in races){
       let t = d3.transition().duration(1000).ease(d3.easeQuadOut);
       let array = makeArray(dataset, sex, races[item]);
-      var points = svg.selectAll("." + races[item])
+      let points = svg.selectAll("." + races[item])
                       .data(array);
-      points.exit().remove();
-      points
-            .enter()
+
+      points.enter()
             .append("circle")
             .attr("r", 1.5)
             .attr("fill", colors[item])
@@ -103,6 +105,7 @@ function main (response){
             .attr("cy", function(d){
               return yScale(d.deathRate) + margin.top
             });
+      points.exit().remove();
 
     }
   }

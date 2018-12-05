@@ -29,4 +29,10 @@
   border-width: 2px;
   border-color: black;
   margin-right: 20px;
+  align-items: center;
+}
+
+.plot-title {
+  font-family: "Times New Roman";
+  font-size: 20;
 }
