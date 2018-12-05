@@ -18,7 +18,8 @@ window.onload = function() {
 function main (response){
   var width = 700;
   var height = 400;
-  var margin = {left:40, right:20, top: 20, bottom: 20};
+  var margin = {left:40, right:120, top: 20, bottom: 20};
+  var legendPadding = 10;
   var xScale = d3.scaleLinear()
                  .range([0,width]);
   var yScale = d3.scaleLinear()
@@ -29,32 +30,6 @@ function main (response){
               .append("svg")
               .attr("width", width + margin.left + margin.right)
               .attr("height", height + margin.top + margin.bottom);
-
-  maxX = d3.max(dataset, function(d){
-    return parseInt(d.lifeExpectancy);
-  })
-  maxY = d3.max(dataset, function(d){
-    return parseInt(d.deathRate);
-  })
-  console.log(maxX)
-  console.log(maxY)
-
-  xScale.domain([0,maxX]);
-  yScale.domain([0,maxY]);
-
-  // Make x and y axis
-  var xAxis = d3.axisBottom(xScale);
-  var yAxis = d3.axisLeft(yScale);
-
-  svg.append("g")
-     .attr("class", "axis")
-     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-     .call(yAxis);
-
-  svg.append("g")
-     .attr("class", "axis")
-     .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
-     .call(xAxis);
 
   svg.append("text")
      .attr("x", 0.75*width)
@@ -71,23 +46,29 @@ function main (response){
 
  legend = svg.append("rect")
              .attr("class", "legend")
-             .attr("x", width - 100)
+             .attr("x", margin.left + width + legendPadding)
              .attr("y", margin.top)
              .attr("width", 100)
              .attr("height", 40);
 
-  var races = ["All Races", "Black", "White"];
+  var races = ["All_Races", "Black", "White"];
   var sexes = ["Both Sexes", "Female", "Male"];
   var colors = ['rgb(27,158,119)','rgb(217,95,2)','rgb(117,112,179)'];
   var legendData = [];
 
-  var points = makeScatter("Both Sexes")
+  makePlot("Both Sexes")
 
   d3.select("#menu")
     .selectAll("button")
     .data(sexes)
     .enter()
     .append("button")
+    .attr("class", "button")
+    .attr("border-color", function(d){
+      if (d == "Both Sexes"){
+        return "blue";
+      }
+    })
     .text(function(d){
       return d;
     })
@@ -96,35 +77,18 @@ function main (response){
       return console.log("Whoop");
     })
 
-    // function updatePlot(sex){
-    //   for (item in races){
-    //     let array = makeArray(dataset, sex, races[item]);
-    //     svg.selectAll(races[item])
-    //        .data(array)
-    //        .transition()
-    //        .duration(1000)
-    //        .ease(d3.easeQuadOut)
-    //        // .attr("fill", color[item])
-    //        .attr("r", 1.5)
-    //        .attr("cx", function(d){
-    //          return xScale(d.lifeExpectancy) + margin.left
-    //        })
-    //        .attr("cy", function(d){
-    //          return yScale(d.deathRate) + margin.top
-    //        })
-    //
-    //   }
-    // }
-
   function updatePlot(sex){
+
+    updateAxes(sex);
+
     for (item in races){
       let t = d3.transition().duration(1000).ease(d3.easeQuadOut);
       let array = makeArray(dataset, sex, races[item]);
       var points = svg.selectAll("." + races[item])
                       .data(array);
-      console.log(points)
-      // console.log(sex, races[item])
-      points.enter()
+      points.exit().remove();
+      points
+            .enter()
             .append("circle")
             .attr("r", 1.5)
             .attr("fill", colors[item])
@@ -138,11 +102,46 @@ function main (response){
             })
             .attr("cy", function(d){
               return yScale(d.deathRate) + margin.top
-            })
+            });
+
     }
   }
 
-  function makeScatter(sex){
+  function updateAxes(sex){
+    var maxX = d3.max(dataset, function(d){
+      if (d.sex == sex){
+        return parseInt(d.lifeExpectancy)
+      }
+    })
+    var maxY = d3.max(dataset, function(d){
+      if (d.sex == sex){
+        return parseInt(d.deathRate)
+      }
+    })
+
+    xScale.domain([0, Math.ceil(maxX/10)*10])
+    yScale.domain([0,Math.ceil(maxY/500)*500])
+
+    var xAxis = d3.axisBottom(xScale);
+    var yAxis = d3.axisLeft(yScale);
+
+    svg.select(".x-axis")
+       .transition()
+       .duration(1000)
+       .ease(d3.easeQuadOut)
+       .call(xAxis)
+
+    svg.select(".y-axis")
+       .transition()
+       .duration(1000)
+       .ease(d3.easeQuadOut)
+       .call(yAxis)
+  }
+
+  function makePlot(sex){
+
+    makeAxes(sex);
+
     for (item in races){
       let array = makeArray(dataset, sex, races[item]);
       let points = svg.selectAll("point")
@@ -162,7 +161,35 @@ function main (response){
       legendData.push(legendItem);
     }
     makeLegend(legendData);
-    return points
+  }
+
+  function makeAxes(sex){
+    var maxX = d3.max(dataset, function(d){
+      if (d.sex == sex){
+        return parseInt(d.lifeExpectancy)
+      }
+    })
+    var maxY = d3.max(dataset, function(d){
+      if (d.sex == sex){
+        return parseInt(d.deathRate)
+      }
+    })
+
+    xScale.domain([0, Math.ceil(maxX/10)*10])
+    yScale.domain([0,Math.ceil(maxY/500)*500])
+
+    var xAxis = d3.axisBottom(xScale);
+    var yAxis = d3.axisLeft(yScale);
+
+    svg.append("g")
+       .attr("class", "x-axis")
+       .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
+       .call(xAxis);
+
+    svg.append("g")
+       .attr("class", "y-axis")
+       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+       .call(yAxis);
   }
 
   function makeLegend(legendData){
@@ -174,7 +201,7 @@ function main (response){
        .attr("fill", function(d){
          return d.color
        })
-       .attr("cx", width - 90)
+       .attr("cx", margin.left + width + legendPadding + 10)
        .attr("cy", function(d, i){
          return margin.top + 10 + 10*i
        })
@@ -184,13 +211,22 @@ function main (response){
        .enter()
        .append("text")
        .attr("class", "legendText")
-       .attr("x", width - 70)
+       .attr("x", margin.left + width + legendPadding + 30)
        .attr("y", function(d,i){
          return margin.top + 13 + 10*i
        })
        .attr("font-size", "10px")
+       .attr("fill", function(d){
+         return d.color;
+       })
        .text(function(d){
-         return d.name
+         if (d.name == "All_Races"){
+           return "All Races"
+         }
+         else{
+           return d.name
+         }
+
        })
    }
 }
@@ -201,6 +237,9 @@ function transformResponse(data){
   for (i in dataHere){
     let datapoint = dataHere[i];
     let object = {year:datapoint[8], race:datapoint[9], sex:datapoint[10], lifeExpectancy:datapoint[11], deathRate:datapoint[12]};
+    if (object.race == "All Races"){
+      object.race = "All_Races";
+    }
     dataArray.push(object);
   }
   return dataArray;

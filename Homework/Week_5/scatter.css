@@ -23,3 +23,10 @@
   stroke: black;
   stroke-width: 1px;
 }
+
+.button {
+  /* background-color: pink; */
+  border-width: 2px;
+  border-color: black;
+  margin-right: 20px;
+}
