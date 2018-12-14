@@ -9,7 +9,6 @@ var coalConsumption = "CoalConsumption.json"
 var europa = "europeFile.json"
 
 window.onload = function() {
-  console.log("Yaazz")
   var requests = [d3.json(europa), d3.json(totalEnergyConsumption),
     d3.json(naturalGasConsumption), d3.json(liquidConsumption),
     d3.json(nuclearConsumption),
@@ -44,7 +43,7 @@ function main (response){
 
   var path = d3.geoPath();
 
-  var svg = d3.select("body")
+  var europe = d3.select("body")
               .append("svg")
               .attr("width", width)
               .attr("height", height)
@@ -64,7 +63,6 @@ function main (response){
   }
   countries.features.forEach(function(d) {d.energyConsumption = energyConsumptionByCountry[d.properties.name]})
 
-  console.log(countries)
   // Set tooltips
   var tip = d3.tip()
               .attr('class', 'd3-tip')
@@ -73,9 +71,98 @@ function main (response){
                 return "<strong>Country: </strong><span class='details'>" + d.properties.name + "<br></span>" + "<strong>Energy Consumption: </strong><span class='details'>" + format(d.energyConsumption) +" (quadrillion BTU)</span>";
               })
 
-  svg.call(tip);
+  europe.call(tip);
 
-  svg.append("g")
+  // set the dimensions and margins of the graph
+  var margin2 = {top: 61, right: 200, bottom: 101, left: 50},
+    width = 960 - margin2.left - margin2.right,
+    height = 500 - margin2.top - margin2.bottom;
+
+  // append the svg obgect to the body of the page
+  // appends a 'group' element to 'svg'
+  // moves the 'group' element to the top left margin
+  var chart = d3.select("body").append("svg")
+      .attr("width", width + margin2.left + margin2.right)
+      .attr("height", height + margin2.top + margin2.bottom)
+      .append("g")
+      .attr("transform",
+            "translate(" + margin2.left + "," + margin2.top + ")");
+  // set the ranges
+  var xScale = d3.scaleLinear().range([0, width]);
+  var yScale = d3.scaleLinear().range([height, 0]);
+
+  var data = collectData("Russia")
+
+  chart.append("text")
+      .attr("x", 150)
+      .attr("y", 0)
+      .attr("class", "plot-title")
+      .text("Stacked area chart of the consumption of different kinds of energy in Russia")
+
+  makeAxes(data)
+
+  var attributes = ["gasConsumption", "coalConsumption", "liquidConsumption", "nuclearConsumption"]
+  var legendData = ["Natural Gas", "Coal", "Petroleum and Other Liquids", "Nuclear, Renewables and Other"]
+  fillAreas(data, attributes)
+  makeLegend(legendData)
+
+  // Set the axes titles
+  chart.append("text")
+     .attr("x", 0.75*width)
+     .attr("y", height + margin2.top - 20)
+     .attr("class", "axis-title")
+     .text("Year");
+
+  chart.append("text")
+     .attr("transform", "rotate(-90)")
+     .attr("x", -height + margin2.top + 20)
+     .attr("y", -margin2.left + 15)
+     .attr("class", "axis-title")
+     .text("Consumption of energy (quadrillion BTU)");
+
+//   chart.append("div")
+//        .attr("id", "toolLine")
+//
+//   var tooltip = chart.select("#toolLine")
+//   var tooltipLine = chart.append('line');
+//   var tipBox = chart.append('rect')
+//                     .attr('width', width)
+//                     .attr('height', height)
+//                     .attr('opacity', 0)
+//                     .on('mousemove', drawTooltip())
+//                     .on('mouseout', removeTooltip());
+//
+//   function removeTooltip() {
+//     if (tooltip) tooltip.style('display', 'none');
+//     if (tooltipLine) tooltipLine.attr('stroke', 'none');
+//   }
+//
+// function drawTooltip() {
+//   const year = Math.floor((x.invert(d3.mouse(tipBox.node())[0]) + 5) / 10) * 10;
+//
+//   states.sort((a, b) => {
+//     return b.history.find(h => h.year == year).population - a.history.find(h => h.year == year).population;
+//   })
+//
+//   tooltipLine.attr('stroke', 'black')
+//     .attr('x1', x(year))
+//     .attr('x2', x(year))
+//     .attr('y1', 0)
+//     .attr('y2', height);
+//
+//   tooltip.html(year)
+//     .style('display', 'block')
+//     .style('left', d3.event.pageX + 20)
+//     .style('top', d3.event.pageY - 20)
+//     .selectAll()
+//     .data(states).enter()
+//     .append('div')
+//     .style('color', d => d.color)
+//     .html(d => d.name + ': ' + d.history.find(h => h.year == year).population);
+// }
+//
+
+  europe.append("g")
      .attr("class", "countries")
      .selectAll("path")
      .data(countries.features)
@@ -105,207 +192,158 @@ function main (response){
          .style("stroke-width",0.3);
      })
      .on('click', function(d){
-       return actionClick(d.properties.name);
+       return actionClick(d.properties.name, chart);
      });
 
-  svg.append("path")
+  europe.append("path")
       .datum(topojson.mesh(countries.features, function(a, b) { return a.id !== b.id; }))
       .attr("class", "names")
       .attr("d", path);
 
-    function actionClick(country){
-      console.log(coalConsumption["Russia"])
+    function actionClick(country, chart){
+
+      // Update the title
+      chart.select(".plot-title")
+         .text("Stacked area chart of the consumption of different kinds of energy in " + country)
+
       // Get the data
+      var data = collectData(country)
+
+      var attributes = ["gasConsumption", "coalConsumption", "liquidConsumption", "nuclearConsumption"]
+
+      // Scale the range of the data
+      xScale.domain(d3.extent(data, function(d) {
+        return d.year;
+      }));
+      maxY = d3.max(data, function(d){
+        return d.totalConsumption;
+      })
+      yScale.domain([0,Math.ceil(maxY/5)*5])
+
+      updateAreas(data, attributes)
+      updateAxes(data)
+
+      function updateAxes(data){
+        // Add the X Axis
+        chart.select(".x-axis")
+            .transition()
+            .duration(1000)
+            .call(d3.axisBottom(xScale).tickFormat(d3.format('.4')))
+
+
+        // Add the Y Axis
+        chart.select(".y-axis")
+            .transition()
+            .duration(1000)
+            .call(d3.axisLeft(yScale));
+      }
+      function updateAreas (data, attributes){
+        // let t = d3.transition().duration(1000)
+        for (item in attributes){
+          var area = d3.area()
+            .x(function(d){ return xScale(d.year)})
+            .y0(function(d){ return yScale(d[attributes[item] + "0"])})
+            .y1(function(d){ return yScale(d[attributes[item] + "0"] + d[attributes[item]])})
+
+          let areaTransition = chart.select("#" + attributes[item])
+                         .data([data])
+                         .transition()
+                         .duration(1000)
+                         .attr("d", area)
+
+        }
+      }
+    }
+    function makeLegend(attributes){
+      chart.selectAll("legendPoint")
+         .data(attributes)
+         .enter()
+         .append("circle")
+         .attr("class", "legendPoint")
+         .attr("fill", function(d, i){
+           return getColor(i)
+         })
+         .attr("cx", margin2.left + width - 10)
+         .attr("cy", function(d, i){
+           return margin2.top + 10 + 15*i
+         })
+         .attr("r", 3)
+
+      chart.selectAll("legendText")
+         .data(attributes)
+         .enter()
+         .append("text")
+         .attr("class", "legendText")
+         .attr("x", margin2.left + width)
+         .attr("y", function(d,i){
+           return margin2.top + 15 + 15*i
+         })
+         .text(function(d){
+           return d
+         })
+    }
+    function makeAxes(data) {
+      // Scale the range of the data
+      xScale.domain(d3.extent(data, function(d) {
+        return d.year;
+      }));
+      maxY = d3.max(data, function(d){
+        return d.totalConsumption;
+      })
+      yScale.domain([0,Math.ceil(maxY/5)*5])
+
+      // Add the X Axis
+      chart.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .attr("class", "x-axis")
+          .call(d3.axisBottom(xScale).tickFormat(d3.format('.4')))
+
+
+      // Add the Y Axis
+      chart.append("g")
+          .attr("class", "y-axis")
+          .call(d3.axisLeft(yScale));
+
+      }
+    function collectData(country){
       var consumptionCountry = energyConsumption[country]
       var gasconsumptionCountry = naturalGasConsumption[country]
       var liquidconsumptionCountry = liquidConsumption[country]
       var nuclearconsumptionCountry = nuclearConsumption[country]
       var coalConsumptionCountry = coalConsumption[country]
 
-      console.log(coalConsumptionCountry)
-
-      var data = []
+      data = []
       for (year in consumptionCountry){
-        if (consumptionCountry[year] != null){
+        if (nuclearconsumptionCountry[year] != null){
           data.push({"year": year, "totalConsumption": consumptionCountry[year],
           "gasConsumption": gasconsumptionCountry[year],
+          "coalConsumption": coalConsumptionCountry[year],
           "liquidConsumption":liquidconsumptionCountry[year],
           "nuclearConsumption": parseFloat(nuclearconsumptionCountry[year]),
-          "coalConsumption": coalConsumptionCountry[year]})
+        "gasConsumption0": 0, "coalConsumption0": gasconsumptionCountry[year], "liquidConsumption0": gasconsumptionCountry[year] + coalConsumptionCountry[year], "nuclearConsumption0": gasconsumptionCountry[year] + coalConsumptionCountry[year] + liquidconsumptionCountry[year]})
         }
       }
-      console.log(data)
-
-      // set the dimensions and margins of the graph
-      var margin = {top: 61, right: 140, bottom: 101, left: 50},
-        width = 960 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
-
-      // set the ranges
-      var xScale = d3.scaleLinear().range([0, width]);
-      var yScale = d3.scaleLinear().range([height, 0]);
-
-      // append the svg obgect to the body of the page
-      // appends a 'group' element to 'svg'
-      // moves the 'group' element to the top left margin
-      var svg2 = d3.select("body").append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-          .attr("transform",
-                "translate(" + margin.left + "," + margin.top + ")");
-
-      makeLine("totalConsumption", getColor(0))
-      makeLine("gasConsumption", getColor(1))
-      makeLine("liquidConsumption", getColor(2))
-      makeLine("nuclearConsumption", getColor(3))
-      makeLine("coalConsumption", getColor(4))
-
-      makeAxes(data)
-
-    function makeLine(attribute, color){
-        var valueline = d3.line()
-          .x(function(d) { return xScale(d.year);})
-          .y(function(d) {return yScale(d[attribute])});
-
-        var area = d3.area()
-          .x(function(d){ return xScale(d.year)})
-          .y0(yScale(0))
-          .y1(function(d){ return yScale(d[attribute])})
-        // Scale the range of the data
-        xScale.domain(d3.extent(data, function(d) {
-            return d.year;
-          }));
-        yScale.domain([0, d3.max(data, function(d) {
-        	  return d.totalConsumption; })]);
-
-        console.log(data[0])
-        // Add the valueline1 path.
-        svg2.append("path")
-            .data([data])
-            .attr("class", "line")
-            .attr("id", attribute)
-            .attr("d", area)
-            .attr("stroke", color)
-            .attr("fill", color)
-      }
-    function makeAxes(data) {
-
-      // Scale the range of the data
-      xScale.domain(d3.extent(data, function(d) {
-        return d.year;
-      }));
-      yScale.domain([0, d3.max(data, function(d) {
-    	  return d.totalConsumption; })]);
-
-      // Add the X Axis
-      svg2.append("g")
-          .attr("transform", "translate(0," + height + ")")
-          .call(d3.axisBottom(xScale));
-
-      // Add the Y Axis
-      svg2.append("g")
-          .call(d3.axisLeft(yScale));
-      }
-
-    function makeAxes2(data) {
-
-      var xBarScale = d3.scaleBand()
-                        .domain(20)
-                        .range([0,width])
-      var yBarScale = d3.scaleLinear()
-                        .domain([0, d3.max(data, function(d){
-                          return d.totalConsumption
-                        })])
-
-      // Add the X Axis
-      svg3.append("g")
-          .attr("transform", "translate(0," + height + ")")
-          .call(d3.axisBottom(xScale));
-
-      // Add the Y Axis
-      svg3.append("g")
-          .call(d3.axisLeft(yScale));
-      }
-    function makeBars(data) {
-      var length = Object.keys(data).length
-      var bars1 = svg3.selectAll("bar1")
-          .data(data)
-          .enter()
-          .append("rect")
-          .attr("class", "bar1")
-          .attr("x", function(d, i){
-            return i * (width/(length*4)) + margin.left;
-          })
-          .attr("y", function(d){
-            return margin.top + yScale(d.totalConsumption)
-          })
-          .attr("width", width/(length*4))
-          .attr("height", function(d){
-            return height - yScale(d.totalConsumption);
-          })
-          .attr("fill", "pink");
-
-       var bars2 = svg3.selectAll("bar2")
-         .data(data)
-         .enter()
-         .append("rect")
-         .attr("class", "bar2")
-         .attr("x", function(d, i){
-          return i * (width/(length*4)) + margin.left + 5;
-         })
-         .attr("y", function(d){
-           return margin.top + yScale(d.gasConsumption)
-         })
-         .attr("fill", "blue")
-         .attr("width", 5)
-         .attr("height", function(d){
-           return height - yScale(d.gasConsumption);
-         })
-       var bars3 = svg3.selectAll("bar3")
-         .data(data)
-         .enter()
-         .append("rect")
-         .attr("class", "bar3")
-         .attr("x", function(d, i){
-        return i * (width/(length*4)) + margin.left + 10;
-         })
-         .attr("y", function(d){
-           return margin.top + yScale(d.liquidConsumption)
-         })
-         .attr("fill", "green")
-         .attr("width", 5)
-         .attr("height", function(d){
-           return height - yScale(d.liquidConsumption);
-         })
-       var bars4 = svg3.selectAll("bar4")
-         .data(data)
-         .enter()
-         .append("rect")
-         .attr("class", "bar4")
-         .attr("x", function(d, i){
-        return i * (width/(length*4)) + margin.left + 15;
-         })
-         .attr("y", function(d){
-           return margin.top + yScale(d.nuclearConsumption)
-         })
-         .attr("fill", "red")
-         .attr("width", 5)
-         .attr("height", function(d){
-           return height - yScale(d.nuclearConsumption);
-         })
+      return data
 
     }
+    function fillAreas(data, attributes){
+      for (item in attributes){
+        var area = d3.area()
+          .x(function(d){ return xScale(d.year)})
+          .y0(function(d){ return yScale(d[attributes[item] + "0"])})
+          .y1(function(d){ return yScale(d[attributes[item] + "0"] + d[attributes[item]])})
 
+        chart.append("path")
+            .data([data])
+            .attr("class", "line")
+            .attr("id", attributes[item])
+            .attr("d", area)
+            .attr("fill", getColor(item))
+      }
+    }
     function getColor(n){
       colors = ['rgb(215,25,28)','rgb(253,174,97)','rgb(255,255,191)','rgb(171,217,233)','rgb(44,123,182)']
       return colors[n]
     }
-
-
-
-    }
-
-
 
 }
