@@ -1,3 +1,6 @@
+/* Name: Tula Kaptein
+Studentnumber: 11013478 */
+
 .names {
 fill: none;
 stroke: #fff;
@@ -63,10 +66,6 @@ stroke-linejoin: round;
     left: 100%;
   }
 
-   /* text{
-    pointer-events:none;
-  } */
-
   .details{
     color:white;
   }
@@ -83,16 +82,33 @@ stroke-linejoin: round;
 }
 
 .axis-title {
-  font-family: sans-serif;
   font-size: 12px;
 }
 
 .legendText {
-  font-family: sans-serif;
   font-size: 10px;
 }
 
 .plot-title{
-  font-family: sans-serif;
   font-size: 16px;
 }
+
+.tooltip {
+  position: absolute;
+  background-color: lightgray;
+  padding: 5px;
+}
+
+.area:hover {
+  stroke: white;
+  stroke-width: 3px;
+}
+
+.focus circle {
+        fill: black;
+        stroke: white;
+    }
+.overlay {
+        fill: none;
+        pointer-events: all;
+    }
