@@ -82,7 +82,7 @@ function main (response){
   europe.call(tip);
 
   // Set the dimensions and margins of the second graph
-  var margin2 = {top: 60, right: 200, bottom: 101, left: 50},
+  var margin2 = {top: 60, right: 200, bottom: 101, left: 150},
     width = 960 - margin2.left - margin2.right,
     height = 500 - margin2.top - margin2.bottom;
 
@@ -128,7 +128,7 @@ function main (response){
   chart.append("text")
      .attr("transform", "rotate(-90)")
      .attr("x", -height + margin2.top + 20)
-     .attr("y", -margin2.left + 15)
+     .attr("y", -margin2.left + 100)
      .attr("class", "axis-title")
      .text("Consumption of energy (quadrillion BTU)");
 
